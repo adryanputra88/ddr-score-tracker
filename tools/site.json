@@ -1,0 +1,13 @@
+{
+  "_comment": [
+    "Hand-set values the workbook cannot supply.",
+    "",
+    "latestRecord: the song you most recently PFC'd, shown on the home page.",
+    "The workbook is sorted alphabetically and has no dates in it, so this",
+    "cannot be worked out from the data — set it here when you add a clear.",
+    "Leave it empty and the home page simply omits the line.",
+    "",
+    "Example: \"latestRecord\": \"The Legend of MAX\""
+  ],
+  "latestRecord": ""
+}

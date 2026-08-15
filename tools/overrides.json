@@ -1,0 +1,11 @@
+{
+  "_comment": [
+    "Hand corrections for songs build_data.py could not resolve, or resolved wrongly.",
+    "Key = the song title exactly as it appears in the workbook cell.",
+    "Recognised fields: level (1-20 integer), origin (mix name string).",
+    "Keys starting with _ are ignored. Run tools/build_data.py --report to list",
+    "everything still unmatched.",
+    "Example:",
+    "  \"Gakuen tengoku 学園天国\": { \"level\": 12, \"origin\": \"DDR SuperNOVA2\" }"
+  ]
+}
