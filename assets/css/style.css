@@ -1784,11 +1784,21 @@ button { font: inherit; color: inherit; }
     background: var(--bg-elev);
     border-bottom: 1px solid var(--line);
     padding: 8px 0 14px;
-    transform: translateY(-130%);
-    transition: transform .3s ease;
+    /* The panel is anchored below the header, so translating by a percentage of
+       its own height does not clear the viewport — at three links it left a
+       20px sliver of itself showing above the header. Offsetting by the header
+       height as well is exact at any menu height, and `visibility` also stops
+       the drop shadow bleeding down onto the page. */
+    transform: translateY(calc(-100% - var(--header-h)));
+    visibility: hidden;
+    transition: transform .3s ease, visibility 0s linear .3s;
     box-shadow: var(--shadow);
   }
-  .nav.is-open { transform: none; }
+  .nav.is-open {
+    transform: none;
+    visibility: visible;
+    transition: transform .3s ease, visibility 0s;
+  }
   .nav__link { height: 50px; padding-inline: 20px; }
   .nav__link[aria-current="page"]::after { left: 20px; right: auto; width: 22px; bottom: 8px; }
 
