@@ -32,6 +32,19 @@
     palette: 'ddr.palette'
   };
 
+  // Playback position lives in sessionStorage, not localStorage: it should carry
+  // across page navigations within a visit, but a fresh visit starts the mix
+  // from the top rather than dropping you into the middle of it.
+  var RESUME = { at: 'ddr.at', playing: 'ddr.playing', forMix: 'ddr.atMix' };
+
+  function session(key, value) {
+    try {
+      if (value === undefined) return window.sessionStorage.getItem(key);
+      window.sessionStorage.setItem(key, value);
+    } catch (e) { /* private mode */ }
+    return null;
+  }
+
   /* ----------------------------------------------------------------- utils */
 
   var DDR = window.DDR || (window.DDR = {});
@@ -195,7 +208,10 @@
     var muteBtn = DDR.$('.player__btn--mute', bar);
     var volume = DDR.$('.player__volume', bar);
     var hint = DDR.$('.player__hint', bar);
-    var picker = DDR.$('.player__select', bar);
+    var pick = DDR.$('#mixpick', bar);
+    var pickBtn = DDR.$('.mixpick__btn', pick);
+    var pickValue = DDR.$('.mixpick__value', pick);
+    var pickMenu = DDR.$('.mixpick__menu', pick);
     var player = null;
     var ready = false;
 
@@ -208,10 +224,60 @@
       || MIXES.filter(function (m) { return m.id === DEFAULT_MIX; })[0]
       || MIXES[0];
 
-    picker.innerHTML = MIXES.map(function (m) {
-      return '<option value="' + m.id + '"' +
-        (m.id === currentMix.id ? ' selected' : '') + '>' + m.name + '</option>';
-    }).join('');
+    /* ------------------------------------------------------- mix picker UI */
+
+    function renderPicker() {
+      pickValue.textContent = currentMix.name;
+      pickMenu.innerHTML = MIXES.map(function (m) {
+        return '<li role="none"><button class="mixpick__opt" type="button" role="option"' +
+          ' data-id="' + m.id + '" data-mix="' + m.palette + '"' +
+          ' aria-selected="' + (m.id === currentMix.id) + '">' +
+          '<span class="mixpick__dot"></span>' + m.name + '</button></li>';
+      }).join('');
+    }
+
+    function openPicker(open) {
+      pick.dataset.open = String(open);
+      pickBtn.setAttribute('aria-expanded', String(open));
+      pickMenu.hidden = !open;
+      if (open) {
+        var sel = DDR.$('.mixpick__opt[aria-selected="true"]', pickMenu);
+        if (sel) sel.focus();
+      }
+    }
+
+    renderPicker();
+
+    pickBtn.addEventListener('click', function () {
+      openPicker(pick.dataset.open !== 'true');
+    });
+
+    pickMenu.addEventListener('click', function (e) {
+      var opt = e.target.closest('.mixpick__opt');
+      if (!opt) return;
+      openPicker(false);
+      pickBtn.focus();
+      selectMix(opt.dataset.id);
+    });
+
+    // Arrow keys move through the list; Escape closes without choosing.
+    pick.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && pick.dataset.open === 'true') {
+        openPicker(false);
+        pickBtn.focus();
+        return;
+      }
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      if (pick.dataset.open !== 'true') { openPicker(true); e.preventDefault(); return; }
+      var opts = DDR.$$('.mixpick__opt', pickMenu);
+      var i = opts.indexOf(document.activeElement);
+      var next = opts[e.key === 'ArrowDown' ? i + 1 : i - 1];
+      if (next) { next.focus(); e.preventDefault(); }
+    });
+
+    document.addEventListener('click', function (e) {
+      if (pick.dataset.open === 'true' && !pick.contains(e.target)) openPicker(false);
+    });
 
     // The gradient itself can't be transitioned, so the whole layer fades out,
     // swaps palette, and fades back in.
@@ -243,32 +309,81 @@
       hint.hidden = !muted;
     }
 
+    /* ------------------------------------------------------------- resume */
+
+    /**
+     * Each page is its own document, so the iframe is torn down on every
+     * navigation and the mix would otherwise restart. The position is written
+     * to sessionStorage while playing and handed back as the player's `start`,
+     * so the music picks up where it left off instead of from the top.
+     */
+    function resumeAt() {
+      if (session(RESUME.forMix) !== currentMix.id) return 0;
+      var at = parseFloat(session(RESUME.at) || '0');
+      return isFinite(at) && at > 0 ? Math.floor(at) : 0;
+    }
+
+    function savePosition() {
+      if (!ready || !player.getCurrentTime) return;
+      var at = player.getCurrentTime();
+      if (!isFinite(at)) return;
+      session(RESUME.at, String(at));
+      session(RESUME.forMix, currentMix.id);
+      session(RESUME.playing, String(bar.classList.contains('is-playing')));
+    }
+
+    setInterval(function () {
+      if (bar.classList.contains('is-playing')) savePosition();
+    }, 1000);
+    // pagehide fires on navigation even when the page goes into the bfcache.
+    window.addEventListener('pagehide', savePosition);
+
+    var wasPlaying = session(RESUME.playing) !== 'false';
+
     window.onYouTubeIframeAPIReady = function () {
       player = new window.YT.Player(host, {
         videoId: currentMix.id,
         playerVars: {
-          autoplay: 1,
+          // Only autoplay if the mix was running before this navigation —
+          // otherwise the iframe would restart music the listener had paused.
+          autoplay: wasPlaying ? 1 : 0,
           controls: 0,
           disablekb: 1,
           modestbranding: 1,
           playsinline: 1,
-          rel: 0
+          rel: 0,
+          start: resumeAt()
         },
         events: {
           onReady: function (e) {
             ready = true;
             e.target.setVolume(savedVolume);
-            if (wantsSound) { e.target.unMute(); } else { e.target.mute(); }
-            reflectMute(!wantsSound);
-            e.target.playVideo();
+            // Always start muted: browsers only permit unattended playback
+            // that way. If sound was already enabled, it is restored the
+            // moment playback is actually running (see onStateChange).
+            e.target.mute();
+            reflectMute(true);
+            if (wasPlaying) e.target.playVideo();
+            else reflect(false);
           },
           onStateChange: function (e) {
-            reflect(e.data === window.YT.PlayerState.PLAYING);
+            var playing = e.data === window.YT.PlayerState.PLAYING;
+            reflect(playing);
+            // Autoplay has survived; now it is safe to bring the sound back.
+            if (playing && wantsSound && player.isMuted && player.isMuted()) {
+              player.unMute();
+              player.setVolume(parseInt(volume.value, 10));
+              reflectMute(false);
+            }
+            if (playing) savePosition();
             // These uploads are long mixes; loop rather than let one stop.
-            if (e.data === window.YT.PlayerState.ENDED) e.target.seekTo(0);
+            if (e.data === window.YT.PlayerState.ENDED) {
+              session(RESUME.at, '0');
+              e.target.seekTo(0);
+            }
           },
           onError: function () {
-            picker.disabled = true;
+            pickBtn.disabled = true;
             DDR.$('.player__label', bar).textContent = 'Music unavailable';
             hint.hidden = true;
           }
@@ -276,11 +391,15 @@
       });
     };
 
-    picker.addEventListener('change', function () {
-      var next = MIXES.filter(function (m) { return m.id === picker.value; })[0];
-      if (!next) return;
+    function selectMix(id) {
+      var next = MIXES.filter(function (m) { return m.id === id; })[0];
+      if (!next || next.id === currentMix.id) return;
       currentMix = next;
       store(STORE.mix, next.id);
+      // A different mix starts from its own beginning.
+      session(RESUME.at, '0');
+      session(RESUME.forMix, next.id);
+      renderPicker();
       applyPalette(next, true);
       if (!ready) return;
       // loadVideoById starts playback, which is only allowed unattended while
@@ -288,12 +407,18 @@
       player.loadVideoById(next.id);
       player.setVolume(parseInt(volume.value, 10));
       if (muteBtn.classList.contains('is-muted')) player.mute();
-    });
+    }
 
     playBtn.addEventListener('click', function () {
       if (!ready) return;
-      if (bar.classList.contains('is-playing')) player.pauseVideo();
-      else player.playVideo();
+      if (bar.classList.contains('is-playing')) {
+        player.pauseVideo();
+        savePosition();
+        session(RESUME.playing, 'false');
+      } else {
+        player.playVideo();
+        session(RESUME.playing, 'true');
+      }
     });
 
     function enableSound() {
@@ -333,7 +458,17 @@
 
   /* ------------------------------------------------------------------ boot */
 
+  /** Build version, from tools/site.json via the generated data file. */
+  function initVersion() {
+    var el = DDR.$('#app-version');
+    if (!el) return;
+    var v = (window.DDR_DATA && window.DDR_DATA.site && window.DDR_DATA.site.version) || '';
+    if (v) el.textContent = 'v' + v;
+    else el.remove();
+  }
+
   function boot() {
+    initVersion();
     initTheme();
     initNav();
     initPlayer();

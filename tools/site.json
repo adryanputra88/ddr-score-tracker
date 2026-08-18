@@ -7,7 +7,10 @@
     "cannot be worked out from the data — set it here when you add a clear.",
     "Leave it empty and the home page simply omits the line.",
     "",
-    "Example: \"latestRecord\": \"The Legend of MAX\""
+    "Example: \"latestRecord\": \"The Legend of MAX\"",
+    "",
+    "version: shown under the wordmark in the navbar. Bump it when you ship."
   ],
-  "latestRecord": ""
+  "latestRecord": "",
+  "version": "1.0"
 }

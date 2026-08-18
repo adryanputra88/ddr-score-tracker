@@ -362,6 +362,14 @@ button { font: inherit; color: inherit; }
   transition: transform .25s cubic-bezier(.3,1.4,.5,1);
 }
 .logo:hover .logo__mark { transform: translateY(-2px); }
+/* Wordmark with the build version tucked under it. */
+.logo__text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  line-height: 1;
+}
 .logo__word {
   font-family: var(--headline);
   font-size: 32px;
@@ -370,6 +378,14 @@ button { font: inherit; color: inherit; }
   line-height: 1;
   white-space: nowrap;
   color: var(--text);
+}
+.logo__ver {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
 }
 
 .nav { display: flex; align-items: center; gap: 4px; margin-right: auto; }
@@ -1632,70 +1648,96 @@ button { font: inherit; color: inherit; }
   margin-top: 1px;
 }
 
-/* Mix picker. Styled as bare text so it reads as the "now playing" line
-   rather than a form control, until you hover it. */
-.player__pick {
-  position: relative;
+/**
+ * Mix picker. A native <select> can't have its option list styled, so this is a
+ * custom listbox: a bare-text trigger that matches the "now playing" line, and
+ * a glass panel that opens upward — the bar is pinned to the bottom.
+ */
+.mixpick { position: relative; margin: 1px 0 0 -8px; }
+
+.mixpick__btn {
   display: inline-flex;
   align-items: center;
-  margin-top: 1px;
-  margin-left: -8px;
-}
-.player__pick select {
-  appearance: none;
-  background: transparent;
+  gap: 8px;
   border: 1px solid transparent;
+  background: transparent;
   border-radius: 8px;
+  padding: 3px 8px;
   color: var(--text);
   font-family: var(--sans);
   font-size: 12.5px;
   font-weight: 500;
-  padding: 3px 26px 3px 8px;
   cursor: pointer;
   max-width: 230px;
   transition: background-color .2s ease, border-color .2s ease;
 }
-.player__pick select:hover {
+.mixpick__btn:hover,
+.mixpick[data-open="true"] .mixpick__btn {
   background: var(--panel-hover);
   border-color: var(--line);
 }
-.player__pick select option {
-  background: var(--bg-elev);
-  color: var(--text);
+.mixpick__value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mixpick__caret {
+  width: 12px; height: 12px; flex: none;
+  color: var(--muted);
+  transition: transform .22s ease;
 }
-.player__pick::after {
-  content: "";
+.mixpick[data-open="true"] .mixpick__caret { transform: rotate(180deg); }
+
+.mixpick__menu {
   position: absolute;
-  right: 11px;
-  width: 5px; height: 5px;
-  border-right: 1.5px solid var(--muted);
-  border-bottom: 1.5px solid var(--muted);
-  transform: translateY(-2px) rotate(45deg);
-  pointer-events: none;
+  bottom: calc(100% + 10px);
+  left: 0;
+  z-index: 55;
+  min-width: 210px;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg-elev) 88%, transparent);
+  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
+  box-shadow: var(--shadow);
+  transform-origin: bottom left;
+  animation: mixpickIn .18s ease both;
+}
+@keyframes mixpickIn {
+  from { opacity: 0; transform: translateY(6px) scale(.98); }
+  to   { opacity: 1; transform: none; }
 }
 
-.player__eq { display: flex; align-items: flex-end; gap: 2px; height: 15px; flex: none; }
-.player__eq i {
-  width: 2.5px;
-  background: var(--accent);
-  border-radius: 1px;
-  height: 20%;
-  opacity: .35;
-}
-.player.is-playing .player__eq i { animation: eq .9s ease-in-out infinite; opacity: 1; }
-.player__eq i:nth-child(2) { animation-delay: .18s; }
-.player__eq i:nth-child(3) { animation-delay: .36s; }
-.player__eq i:nth-child(4) { animation-delay: .12s; }
-@keyframes eq {
-  0%, 100% { height: 22%; }
-  50%      { height: 100%; }
-}
-
-.player__volume {
-  width: 88px;
-  accent-color: var(--accent);
-  flex: none;
+.mixpick__opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 11px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
   cursor: pointer;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  text-align: left;
+  white-space: nowrap;
+  transition: background-color .15s ease, color .15s ease;
+}
+.mixpick__opt:hover,
+.mixpick__opt:focus-visible { background: var(--panel-hover); color: var(--text); }
+.mixpick__opt[aria-selected="true"] { color: var(--accent); }
+
+/* Each release's own palette, as a swatch. */
+.mixpick__dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex: none;
+  border: 1px solid rgb(255 255 255 / .25);
+  background: linear-gradient(135deg,
+    rgb(var(--c1)) 0%, rgb(var(--c2)) 50%, rgb(var(--c3)) 100%);
 }
 
 .player__hint {
@@ -1751,7 +1793,7 @@ button { font: inherit; color: inherit; }
   .nav__link[aria-current="page"]::after { left: 20px; right: auto; width: 22px; bottom: 8px; }
 
   .nav-toggle { display: grid; }
-  .logo__word { display: none; }
+  .logo__text { display: none; }
 
   .metrics { grid-template-columns: 1fr; }
   .metric + .metric { border-top: 1px solid var(--line); }
