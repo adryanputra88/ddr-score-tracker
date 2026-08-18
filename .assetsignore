@@ -1,0 +1,7 @@
+# Repo plumbing and the build pipeline — not part of the published site.
+.git
+.gitignore
+.assetsignore
+wrangler.jsonc
+README.md
+tools

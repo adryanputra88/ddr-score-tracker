@@ -1,0 +1,15 @@
+{
+  // Static site served straight from the repo root — no build step, no Worker
+  // script. Assets-only Workers omit `main` and the ASSETS binding.
+  "name": "ddr-score-tracker",
+  "compatibility_date": "2026-08-18",
+  "assets": {
+    "directory": "./"
+    // html_handling defaults to "auto-trailing-slash", so /records serves records.html
+  },
+  // Declaring the custom domain here means a deploy attaches it and creates the
+  // DNS record automatically — no dashboard step, and it is reproducible.
+  "routes": [
+    { "pattern": "ddr.adryanputra.com", "custom_domain": true }
+  ]
+}
