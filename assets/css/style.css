@@ -105,11 +105,11 @@
   --c3: 168 104 242;     /* violet */
   --bg-dark: #123048;
 }
-[data-mix="ddr-extreme"] {           /* neon violet / blue / teal */
-  --c1: 168 92 246;
-  --c2: 70 104 240;
-  --c3: 32 206 196;
-  --bg-dark: #17123a;
+[data-mix="ddr-extreme"] {           /* yellow-green into deep forest */
+  --c1: 181 212 74;
+  --c2: 74 158 53;
+  --c3: 13 105 43;
+  --bg-dark: #0a2a15;
 }
 [data-mix="ddr-supernova2"] {        /* icy blue and white */
   --c1: 176 232 255;
@@ -417,7 +417,15 @@ button { font: inherit; color: inherit; }
   background: var(--accent);
 }
 
-.header__actions { display: flex; align-items: center; gap: 8px; flex: none; }
+/* Always hard right, so the wordmark keeps the space next to the logo even on
+   mobile where .nav leaves the flow. */
+.header__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  margin-left: auto;
+}
 
 .icon-btn {
   width: 38px; height: 38px;
@@ -480,7 +488,16 @@ button { font: inherit; color: inherit; }
 
 /* ---------- hero ---------- */
 
-.hero { padding: 72px 0 40px; text-align: center; }
+.hero { padding: 72px 0 20px; text-align: center; }
+
+/* Masthead with the blurb stacked under the title, both flush left with the
+   first card in the grid below. Tight, because the sticky filter bar follows. */
+.hero--stack {
+  text-align: left;
+  padding: 34px 0 14px;
+}
+.hero--stack .hero__title { margin: 0; white-space: normal; }
+.hero--stack .hero__sub { margin: 8px 0 0; max-width: 56ch; }
 
 /* Page headers that sit on one row: title flush left with the first card in the
    grid below, blurb flush right with the last. */
@@ -709,7 +726,7 @@ button { font: inherit; color: inherit; }
 
 /* ---------- section shell ---------- */
 
-.section { padding: 64px 0; }
+.section { padding: 32px 0; }
 .section__head {
   display: flex;
   align-items: flex-end;
@@ -759,7 +776,12 @@ button { font: inherit; color: inherit; }
 .rail-grid .section__head { align-items: flex-start; }
 .rail-grid .section__head .seg { align-self: flex-end; }
 
-.rail { display: grid; gap: 2px; }
+.rail {
+  display: grid;
+  /* Two up: six totals as one tall column wasted a lot of vertical space. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 18px;
+}
 
 /* No permanent highlight on any row — the accent is a hover affordance only,
    picking up both the rule and the number. */
@@ -878,10 +900,11 @@ button { font: inherit; color: inherit; }
 
 /* ---------- proportion circles (POGO 4) ---------- */
 
+/* Six buckets, so three across leaves two even rows rather than an orphan. */
 .circles {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
-  gap: 26px 18px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px 14px;
 }
 .circle-cell { text-align: center; }
 .circle-cell__disc {
@@ -1078,6 +1101,13 @@ button { font: inherit; color: inherit; }
   pointer-events: none;
 }
 
+
+/* Desktop keeps the full inline toolbar; the compact row and the sheet chrome
+   only exist at mobile widths. */
+.search--compact,
+.filter-btn,
+.filter-sheet__head,
+.filter-sheet__done { display: none; }
 
 /* ---------- records: list ---------- */
 
@@ -1476,18 +1506,36 @@ button { font: inherit; color: inherit; }
 
 /* ---------- about: section tabs ---------- */
 
-/* Sized to its tabs rather than the content column, so the rule under them ends
-   where the last tab does. */
-.tabs {
-  display: inline-flex;
-  width: auto;
-  max-width: 100%;
-  gap: 4px;
-  flex-wrap: wrap;
+/**
+ * One row, always. The tabs scroll sideways rather than wrapping, so the strip
+ * keeps a fixed height and can stick under the header while you read.
+ */
+.tabs-bar {
+  position: sticky;
+  top: var(--header-h);
+  z-index: 30;
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
   border-bottom: 1px solid var(--line);
 }
+[data-theme="light"] .tabs-bar {
+  background: color-mix(in srgb, #ffffff 55%, transparent);
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.tabs::-webkit-scrollbar { display: none; }
 .tabs__btn {
   position: relative;
+  flex: none;
   border: 0;
   background: none;
   padding: 12px 16px 14px;
@@ -1631,7 +1679,7 @@ button { font: inherit; color: inherit; }
 .player__btn.is-muted .player__icon--muted { display: block; }
 .player__btn.is-muted .player__icon--sound { display: none; }
 
-.player__meta { min-width: 0; flex: 1 1 auto; }
+.player__meta { min-width: 0; flex: 0 1 auto; }
 .player__label {
   font-family: var(--mono);
   font-size: 9.5px;
@@ -1740,22 +1788,64 @@ button { font: inherit; color: inherit; }
     rgb(var(--c1)) 0%, rgb(var(--c2)) 50%, rgb(var(--c3)) 100%);
 }
 
-.player__hint {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--accent);
-  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
-  background: color-mix(in srgb, var(--accent) 16%, transparent);
+/**
+ * Volume. It lives next to the mix picker rather than in the far corner, which
+ * is reserved for the credit. On desktop .player__vol-pop is transparent to
+ * layout so the mute button and slider sit inline in the bar; on mobile it
+ * becomes a popover with the slider stood on end.
+ */
+.player__vol { position: relative; flex: none; display: flex; align-items: center; gap: 8px; }
+.player__vol-toggle { display: none; }
+.player__vol-pop { display: contents; }
+
+.player__volume {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 88px;
+  height: 4px;
   border-radius: 999px;
-  padding: 5px 12px;
+  background: var(--line);
   cursor: pointer;
-  flex: none;
-  animation: pulse 2.2s ease-in-out infinite;
 }
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
-.player__hint[hidden] { display: none; }
+.player__volume::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--text);
+  border: 0;
+  cursor: pointer;
+}
+.player__volume::-moz-range-thumb {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--text);
+  border: 0;
+  cursor: pointer;
+}
+
+/* Bottom-right corner: who made this. */
+.player__credit {
+  margin: 0 0 0 auto;
+  flex: none;
+  text-align: right;
+  line-height: 1.25;
+}
+.player__credit span {
+  display: block;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.player__credit a {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+.player__credit a:hover { color: var(--accent); border-bottom-color: currentColor; }
 
 #yt-host {
   position: fixed;
@@ -1803,7 +1893,19 @@ button { font: inherit; color: inherit; }
   .nav__link[aria-current="page"]::after { left: 20px; right: auto; width: 22px; bottom: 8px; }
 
   .nav-toggle { display: grid; }
-  .logo__text { display: none; }
+  .logo { gap: 7px; }
+  .logo__mark { width: 34px; height: 34px; }
+  .logo__word { font-size: 24px; }
+  .logo__ver { font-size: 8px; letter-spacing: .13em; }
+
+  /* Bigger, and split at a phrase boundary rather than wherever it happens to
+     wrap: "Can I call you" / "a dancing master?". */
+  .hero__title { font-size: clamp(34px, 10.4vw, 46px); }
+  .hero__sfx .hero__break { display: block; }
+
+  /* 30% tighter between the record capsule and the first metric. */
+  .capsules { margin-top: 20px; }
+  .metrics { margin-top: 34px; }
 
   .metrics { grid-template-columns: 1fr; }
   .metric + .metric { border-top: 1px solid var(--line); }
@@ -1815,21 +1917,148 @@ button { font: inherit; color: inherit; }
   .record-grid { grid-template-columns: 1fr; }
   .drawer { padding: 28px 22px 60px; }
   
-  /* Two controls per row instead of one each. */
-  .search { flex: 1 1 100%; }
-  .chips { width: 100%; }
-  .chip { flex: 1 1 auto; justify-content: center; padding-inline: 10px; }
-  .select { flex: 1 1 calc(50% - 5px); }
-  .select select { width: 100%; font-size: 10.5px; letter-spacing: .06em; }
-  /* "All difficulties" is the longest label — give it the whole row. */
-  .select--wide { flex: 1 1 100%; }
+  /**
+   * Mobile filtering: the sticky bar is reduced to one row — a search field and
+   * a Filter button — so it costs almost no vertical space while scrolling. The
+   * complete set of controls moves into a full-screen sheet behind the button.
+   */
+  .toolbar { padding: 10px 0; }
+  .toolbar__inner { flex-wrap: nowrap; gap: 8px; }
+
+  .search--compact { display: block; flex: 1 1 auto; min-width: 0; }
+  .search--compact input { height: 40px; font-size: 12px; }
+
+  .filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+    height: 40px;
+    padding: 0 15px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .filter-btn svg { width: 15px; height: 15px; }
+  .filter-btn__count {
+    display: inline-grid;
+    place-items: center;
+    min-width: 17px; height: 17px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-size: 9px;
+    letter-spacing: 0;
+  }
+
+  /* The toolbar itself becomes the sheet. */
+  .toolbar.is-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    background: color-mix(in srgb, var(--bg) 78%, transparent);
+    backdrop-filter: blur(30px) saturate(160%);
+    -webkit-backdrop-filter: blur(30px) saturate(160%);
+    border: 0;
+    overflow-y: auto;
+  }
+  .toolbar.is-sheet .filter-sheet__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 20px 12px;
+    border-bottom: 1px solid var(--line-soft);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  .toolbar.is-sheet .toolbar__inner {
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 10px;
+    padding: 18px 20px 28px;
+  }
+  /* Inside the sheet the compact row is redundant — the real search is there. */
+  .toolbar.is-sheet .search--compact,
+  .toolbar.is-sheet .filter-btn { display: none; }
+  .toolbar.is-sheet .search:not(.search--compact),
+  .toolbar.is-sheet .select { display: block; width: 100%; flex: none; }
+  .toolbar.is-sheet .select select { width: 100%; height: 46px; font-size: 11px; }
+  .toolbar.is-sheet .search input { height: 46px; }
+  .toolbar.is-sheet .filter-sheet__done {
+    display: block;
+    margin-top: 6px;
+    height: 48px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  /* Controls that only make sense in the sheet stay hidden in the bar. */
+  .toolbar:not(.is-sheet) .search:not(.search--compact),
+  .toolbar:not(.is-sheet) .select { display: none; }
 
   /* Only the transport and the track name survive at this width; the label,
      meter and volume slider would push the bar past its fixed height. */
   .player { gap: 10px; padding-inline: 14px; }
-  .player__volume, .player__eq, .player__label { display: none; }
+  .player__eq, .player__label { display: none; }
   .player__track { font-size: 12px; }
-  .player__hint { padding: 5px 10px; letter-spacing: .08em; }
+
+  /* Volume folds into a popover above the speaker button. */
+  .player__vol-toggle { display: grid; }
+  .player__vol-pop {
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: 10px;
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%) translateY(6px);
+    padding: 14px 10px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: var(--bg-elev);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, .38);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .18s ease, transform .18s ease, visibility 0s linear .18s;
+  }
+  .player__vol[data-open="true"] .player__vol-pop {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%);
+    transition: opacity .18s ease, transform .18s ease, visibility 0s;
+  }
+  /* writing-mode stands the range on end while keeping the custom track and
+     thumb; -webkit-appearance: slider-vertical would restore the native one. */
+  .player__volume {
+    writing-mode: vertical-lr;
+    direction: rtl;
+    width: 4px;
+    height: 104px;
+  }
+
+  .player__credit span { font-size: 8px; letter-spacing: .14em; }
+  .player__credit a { font-size: 11.5px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

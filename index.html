@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Jersey+10&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/css/style.css?v=20260818214006" />
+<link rel="stylesheet" href="assets/css/style.css?v=20260818222710" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2306070c'/%3E%3Cpath d='M16 6l7 8h-4v6h-6v-6H9z' fill='%2349dcf5'/%3E%3C/svg%3E" />
 </head>
 <body data-page="home">
@@ -79,7 +79,7 @@
       <h1 class="hero__title">
         <button class="hero__sfx" type="button" id="sfx-title"
                 data-tip="What the announcer says when you AAA a song on the older DDR mixes. Go on, press it.">
-          “Can I call you a dancing master?”
+          “Can I call you<span class="hero__break"> </span>a dancing master?”
         </button>
       </h1>
 
@@ -154,20 +154,21 @@
 
   <!-- ===================== PRECISION ===================== -->
   <section class="section">
-    <div class="wrap">
-      <div class="section__head">
-        <div>
-          <p class="eyebrow">Precision</p>
-          <h2 class="section__title">How clean were they?</h2>
-        </div>
-        <p class="section__note">
+    <div class="wrap rail-grid">
+
+      <div>
+        <p class="eyebrow">Precision</p>
+        <h2 class="section__title">How clean were they?</h2>
+        <p class="section__note" style="margin-top:10px">
           How many Perfects slipped past the Marvelous timing window. Fewer is
           better; 0 would be a Marvelous Full Combo.
         </p>
       </div>
-      <div class="panel" style="padding:30px 26px">
+
+      <div class="panel" style="padding:26px 22px">
         <div class="circles" id="precision"></div>
       </div>
+
     </div>
   </section>
 
@@ -217,17 +218,33 @@
       <ul class="mixpick__menu" role="listbox" aria-label="Background mix" hidden></ul>
     </div>
   </div>
-  <button class="player__hint" type="button" hidden>Enable sound</button>
-  <button class="player__btn player__btn--mute" type="button" aria-label="Mute">
-    <svg class="player__icon--sound" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
-    <svg class="player__icon--muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="m16 9 5 6M21 9l-5 6"/></svg>
-  </button>
-  <input class="player__volume" type="range" min="0" max="100" value="35" aria-label="Volume" />
+  <!-- Volume sits beside the mix picker: the bottom-right corner is the credit.
+       On desktop the slider is inline; on mobile it hides in a popover behind
+       the speaker button. -->
+  <div class="player__vol" data-open="false">
+    <button class="player__btn player__vol-toggle" type="button"
+            aria-label="Volume" aria-expanded="false">
+      <svg class="player__icon--sound" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
+      <svg class="player__icon--muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="m16 9 5 6M21 9l-5 6"/></svg>
+    </button>
+    <div class="player__vol-pop">
+      <button class="player__btn player__btn--mute" type="button" aria-label="Mute">
+      <svg class="player__icon--sound" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
+      <svg class="player__icon--muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="m16 9 5 6M21 9l-5 6"/></svg>
+      </button>
+      <input class="player__volume" type="range" min="0" max="100" value="35" aria-label="Volume" />
+    </div>
+  </div>
+
+  <p class="player__credit">
+    <span>Created by</span>
+    <a href="https://adryanputra.com" target="_blank" rel="noopener noreferrer">Adryan Putra</a>
+  </p>
 </div>
 
-<script src="data/records.js?v=20260818214006"></script>
-<script src="assets/js/app.js?v=20260818214006"></script>
-<script src="assets/js/drawer.js?v=20260818214006"></script>
-<script src="assets/js/home.js?v=20260818214006"></script>
+<script src="data/records.js?v=20260818222710"></script>
+<script src="assets/js/app.js?v=20260818222710"></script>
+<script src="assets/js/drawer.js?v=20260818222710"></script>
+<script src="assets/js/home.js?v=20260818222710"></script>
 </body>
 </html>

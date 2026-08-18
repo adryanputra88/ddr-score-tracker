@@ -196,8 +196,8 @@
    * Background audio via the YouTube IFrame API.
    *
    * Browsers only allow unattended playback when it is muted, so the player
-   * starts muted and the bar shows an "enable sound" affordance. Once the
-   * listener opts in, the choice and volume are remembered across pages.
+   * starts muted and the speaker button carries the muted state. Tapping it
+   * opts into sound; the choice and volume are remembered across pages.
    */
   function initPlayer() {
     var bar = DDR.$('.player');
@@ -207,7 +207,10 @@
     var playBtn = DDR.$('.player__btn--play', bar);
     var muteBtn = DDR.$('.player__btn--mute', bar);
     var volume = DDR.$('.player__volume', bar);
-    var hint = DDR.$('.player__hint', bar);
+    // The toggle only exists as a separate control on mobile, where it opens
+    // the volume popover; it mirrors the mute button's icon state.
+    var vol = DDR.$('.player__vol', bar);
+    var volToggle = DDR.$('.player__vol-toggle', bar);
     var pick = DDR.$('#mixpick', bar);
     var pickBtn = DDR.$('.mixpick__btn', pick);
     var pickValue = DDR.$('.mixpick__value', pick);
@@ -304,9 +307,11 @@
     }
 
     function reflectMute(muted) {
-      muteBtn.classList.toggle('is-muted', muted);
+      [muteBtn, volToggle].forEach(function (b) {
+        b.classList.toggle('is-muted', muted);
+      });
       muteBtn.setAttribute('aria-label', muted ? 'Unmute' : 'Mute');
-      hint.hidden = !muted;
+      volToggle.setAttribute('aria-label', muted ? 'Volume — muted' : 'Volume');
     }
 
     /* ------------------------------------------------------------- resume */
@@ -385,7 +390,6 @@
           onError: function () {
             pickBtn.disabled = true;
             DDR.$('.player__label', bar).textContent = 'Music unavailable';
-            hint.hidden = true;
           }
         }
       });
@@ -441,7 +445,24 @@
       }
     });
 
-    hint.addEventListener('click', enableSound);
+    function setVolOpen(open) {
+      vol.dataset.open = open ? 'true' : 'false';
+      volToggle.setAttribute('aria-expanded', String(open));
+    }
+
+    volToggle.addEventListener('click', function (e) {
+      e.stopPropagation();
+      setVolOpen(vol.dataset.open !== 'true');
+    });
+    document.addEventListener('click', function (e) {
+      if (vol.dataset.open === 'true' && !vol.contains(e.target)) setVolOpen(false);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && vol.dataset.open === 'true') {
+        setVolOpen(false);
+        volToggle.focus();
+      }
+    });
 
     volume.addEventListener('input', function () {
       var v = parseInt(volume.value, 10);

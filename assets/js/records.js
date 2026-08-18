@@ -86,6 +86,7 @@
     var cmp = by[state.sort] || by.alpha;
     rows.sort(function (a, b) { return cmp(a, b) || by.alpha(a, b); });
 
+    if (DDR.updateFilterCount) DDR.updateFilterCount();
     render(rows);
   }
 
@@ -132,12 +133,55 @@
 
   /* --------------------------------------------------------------- controls */
 
+  // Two search fields exist: the one in the sticky bar on mobile and the one
+  // inside the sheet. They drive the same state and mirror each other.
   var debounce;
-  $('#q').addEventListener('input', function (e) {
-    clearTimeout(debounce);
-    var value = e.target.value;
-    debounce = setTimeout(function () { state.q = value; apply(); }, 140);
+  var searches = [$('#q'), $('#q-compact')].filter(Boolean);
+  searches.forEach(function (input) {
+    input.addEventListener('input', function (e) {
+      var value = e.target.value;
+      searches.forEach(function (other) { if (other !== input) other.value = value; });
+      clearTimeout(debounce);
+      debounce = setTimeout(function () { state.q = value; apply(); }, 140);
+    });
   });
+
+  /* ----------------------------------------------------- mobile filter sheet */
+
+  (function initSheet() {
+    var toolbar = $('.toolbar');
+    var openBtn = $('#filter-open');
+    var closeBtn = $('#filter-close');
+    var doneBtn = $('#filter-done');
+    var countEl = $('#filter-count');
+    if (!toolbar || !openBtn) return;
+
+    function setSheet(open) {
+      toolbar.classList.toggle('is-sheet', open);
+      document.body.style.overflow = open ? 'hidden' : '';
+      if (open) $('#q').focus();
+      else openBtn.focus();
+    }
+
+    openBtn.addEventListener('click', function () { setSheet(true); });
+    [closeBtn, doneBtn].forEach(function (b) {
+      if (b) b.addEventListener('click', function () { setSheet(false); });
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && toolbar.classList.contains('is-sheet')) setSheet(false);
+    });
+
+    // Badge showing how many filters are narrowing the list (search excluded —
+    // that one is visible in the bar already).
+    DDR.updateFilterCount = function () {
+      var n = ['diff', 'level', 'origin'].filter(function (k) { return state[k]; }).length
+            + (state.sort !== 'alpha' ? 1 : 0);
+      if (!countEl) return;
+      countEl.textContent = n;
+      countEl.hidden = n === 0;
+    };
+    DDR.updateFilterCount();
+  }());
 
   $('#difficulty').addEventListener('change', function (e) {
     state.diff = e.target.value;
